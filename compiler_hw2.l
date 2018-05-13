@@ -20,13 +20,13 @@ id			{letter}+({letter}|{digit})*
 %%
 
  /* Arithmetic */
-"+"     { }
-"-" 	{ }
-"*" 	{ }
-"/" 	{ }
-"%"     { }
-"++"    { }
-"--"    { }
+"+"     { printf("ADD\n"); }
+"-" 	{ printf("SUB\n"); }
+"*" 	{ printf("MUL\n"); }
+"/" 	{ printf("DIV\n"); }
+"%"     { printf("MOD\n"); }
+"++"    { printf("INCRE\n"); }
+"--"    { printf("DECRE\n"); }
 
  /* Relational */
 ">"		{ }
@@ -66,9 +66,9 @@ id			{letter}+({letter}|{digit})*
 
  /* Declaration Keywords */
 "var"		{ }
-"void"		{ }
-"int"		{ }
-"float32"	{ }
+"void"		{ return (VOID); }
+"int"		{ return (INT); }
+"float32"	{ return (FLOAT); }
 
  /* String Constant */
 \"				        { BEGIN STRING_STATE;}

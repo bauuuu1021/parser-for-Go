@@ -3,6 +3,7 @@
 #include <stdio.h>
 extern int yylineno;
 extern int yylex();
+extern FILE *yyin;
 
 /* Symbol table function - you can add new function if need. */
 int lookup_symbol();
@@ -23,6 +24,7 @@ void dump_symbol();
 %token PRINT PRINTLN 
 %token IF ELSE FOR
 %token VAR ID NEWLINE
+%token INT VOID FLOAT
 
 /* Token with return, which need to sepcify type */
 %token <i_val> I_CONST
@@ -54,13 +56,13 @@ declaration
     : VAR ID type '=' initializer NEWLINE
     | VAR ID type NEWLINE
 ;
-/*
+
 type
-    : INT { $$ = $1; }
-    | FLOAT { $$ = $1; }
-    | VOID { $$ = $1; }
+    : INT //{ $$ = $1; }
+    | FLOAT //{ $$ = $1; }
+    | VOID //{ $$ = $1; }
 ;
-*/
+
 %%
 
 /* C code section */
@@ -73,7 +75,10 @@ int yyerror(char *s)
 int main(int argc, char** argv)
 {
     yylineno = 0;
-
+    
+    if (!(yyin=fopen(argv[1],"r")))
+        printf("fopen failed\n");
+    
     yyparse();
 
     return 0;
