@@ -21,13 +21,13 @@ id			{letter}+({letter}|{digit})*
 %%
 
  /* Arithmetic */
-"+"     { printf("ADD\n"); }
-"-" 	{ printf("SUB\n"); }
-"*" 	{ printf("MUL\n"); }
-"/" 	{ printf("DIV\n"); }
-"%"     { printf("MOD\n"); }
-"++"    { printf("INCRE\n"); }
-"--"    { printf("DECRE\n"); }
+"+"     { printf("ADD\n");return ADD; }
+"-" 	{ printf("SUB\n");return SUB; }
+"*" 	{ printf("MUL\n");return MUL; }
+"/" 	{ printf("DIV\n");return DIV; }
+"%"     { printf("MOD\n");return MOD; }
+"++"    { printf("INCRE\n");return INCRE; }
+"--"    { printf("DECRE\n");return DECRE; }
 
  /* Relational */
 ">"		{ return LARGER; }
@@ -96,8 +96,8 @@ id			{letter}+({letter}|{digit})*
  /* others */
 
 [\n]		{ return NL; }
-[ \t]		{ } /* Ignore */
-[^; \t] 	{ } /* Ignore other charactor sets */
+[ \t]		{ ; } /* Ignore */
+[^; \t] 	{ ; } /* Ignore other charactor sets */
 <<EOF>>     { }
 
 %%
