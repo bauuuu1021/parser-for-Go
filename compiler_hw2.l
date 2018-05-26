@@ -29,15 +29,15 @@ id			{letter}+({letter}|{digit})*
 "--"    { printf("DECRE\n"); }
 
  /* Relational */
-">"		{ }
-"<"		{ }
-">="	{ }
-"<="	{ }
-"=="	{ }
-"!="	{ }
+">"		{ return LARGER; }
+"<"		{ return SMALLER; }
+">="	{ return EQ_LARGER; }
+"<="	{ return EQ_SMALLER; }
+"=="	{ return EQUAL; }
+"!="	{ return NOT_EQUAL; }
 
  /* Assignment */
-"="		{ }
+"="		{ return ASSIGN; }
 "+="	{ }
 "-="	{ }
 "*="	{ }
@@ -50,10 +50,10 @@ id			{letter}+({letter}|{digit})*
 "!"		{ }
 
  /* Delimiters */
-"("		{ }
-")"		{ }
-"{"		{ }
-"}"		{ }
+"("		{ return LB; }
+")"		{ return RB; }
+"{"		{ return LCB; }
+"}"		{ return RCB; }
 
  /* Print Keywords */	
 "print"		{ }
@@ -65,7 +65,7 @@ id			{letter}+({letter}|{digit})*
 "for"		{ }
 
  /* Declaration Keywords */
-"var"		{ }
+"var"		{ return VAR; }
 "void"		{ return (VOID); }
 "int"		{ return (INT); }
 "float32"	{ return (FLOAT); }
@@ -76,8 +76,8 @@ id			{letter}+({letter}|{digit})*
 <STRING_STATE>[^"]*		{ }
 
  /* Number Constant */
-{integer}	{ }
-{double}	{ }
+{integer}	{ return I_CONST; }
+{double}	{ return F_CONST; }
 
  /* C type Comment */
 "/*"				{ BEGIN COMMENT; }
@@ -90,11 +90,11 @@ id			{letter}+({letter}|{digit})*
 \/\/.*	{ }
 
  /* Variable ID */
- {id}       { }
+ {id}       { printf("[lex]id:%s\n",yytext);yylval.string=yytext;return ID;}
 
  /* others */
 
-[\n]		{ }
+[\n]		{ return NEWLINE; }
 [ \t]		{ } /* Ignore */
 [^; \t] 	{ } /* Ignore other charactor sets */
 <<EOF>>     { }

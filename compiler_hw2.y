@@ -3,7 +3,6 @@
 #include <stdio.h>
 extern int yylineno;
 extern int yylex();
-extern FILE *yyin;
 
 /* Symbol table function - you can add new function if need. */
 int lookup_symbol();
@@ -23,16 +22,22 @@ void dump_symbol();
 /* Token without return */
 %token PRINT PRINTLN 
 %token IF ELSE FOR
-%token VAR ID NEWLINE
-%token INT VOID FLOAT
+%token VAR NEWLINE
+%token INT VOID FLOAT 
+%token ASSIGN
+%token ADD SUB MUL DIV MOD INCRE DECRE
+%token LARGER SMALLER EQ_LARGER EQ_SMALLER EQUAL NOT_EQUAL
+%token LB RB LCB RCB
 
 /* Token with return, which need to sepcify type */
-%token <i_val> I_CONST
-%token <f_val> F_CONST
-%token <string> STRING
+%token <i_val> I_CONST INT
+%token <f_val> F_CONST FLOAT
+%token <string> ID STRING
 
 /* Nonterminal with return, which need to sepcify type */
-%type <f_val> stat
+%type <f_val> stat declaration initializer
+%type <f_val> type
+
 
 /* Yacc will start at this nonterminal */
 %start program
@@ -53,14 +58,24 @@ stat
 ;
 
 declaration
-    : VAR ID type '=' initializer NEWLINE
-    | VAR ID type NEWLINE
+    : VAR ID type ASSIGN initializer NEWLINE {$$=$5;printf("VAR ID(%s) type '=' initializer(%f) NEWLINE\n",$2,$5);}
+    | VAR ID type NEWLINE {printf("VAR ID type NEWLINE\n");}
+;
+
+
+initializer
+    : I_CONST 
+    | F_CONST {$$=$1;printf("%f\n",$1);}
+    | STRING
+;
+
+print_func 
+    : 
 ;
 
 type
-    : INT //{ $$ = $1; }
-    | FLOAT //{ $$ = $1; }
-    | VOID //{ $$ = $1; }
+    : INT { $$ = $1;}
+    | FLOAT { $$ = $1; }
 ;
 
 %%
@@ -75,10 +90,7 @@ int yyerror(char *s)
 int main(int argc, char** argv)
 {
     yylineno = 0;
-    
-    if (!(yyin=fopen(argv[1],"r")))
-        printf("fopen failed\n");
-    
+
     yyparse();
 
     return 0;
