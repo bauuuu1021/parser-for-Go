@@ -1,6 +1,8 @@
 /*	Definition section */
 %{
 #include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
 extern int yylineno;
 extern int yylex();
 
@@ -8,8 +10,19 @@ extern int yylex();
 int lookup_symbol();
 void create_symbol();
 void insert_symbol();
+void insert_value();
 void dump_symbol();
 
+typedef union {
+        int intData;
+        float floatData;
+        char *stringData;
+} value;
+
+struct dataBlock *head, *current, *tail;
+value temp; /* union contain value to insert into symbol table */
+int numIndex = 1; /* aka current index number */
+int countLine = 1;
 %}
 
 /* Using union to define nonterminal and token type */
@@ -22,7 +35,7 @@ void dump_symbol();
 /* Token without return */
 %token PRINT PRINTLN 
 %token IF ELSE FOR
-%token VAR NEWLINE
+%token VAR NL
 %token INT VOID FLOAT 
 %token ASSIGN
 %token ADD SUB MUL DIV MOD INCRE DECRE
@@ -30,13 +43,14 @@ void dump_symbol();
 %token LB RB LCB RCB
 
 /* Token with return, which need to sepcify type */
-%token <i_val> I_CONST INT
-%token <f_val> F_CONST FLOAT
+%token <i_val> I_CONST INT FLOAT
+%token <f_val> F_CONST
 %token <string> ID STRING
 
 /* Nonterminal with return, which need to sepcify type */
-%type <f_val> stat declaration initializer
-%type <f_val> type
+%type <f_val> stat declaration 
+%type <i_val> type decl_check
+%type <f_val> initializer
 
 
 /* Yacc will start at this nonterminal */
@@ -58,15 +72,56 @@ stat
 ;
 
 declaration
-    : VAR ID type ASSIGN initializer NEWLINE {$$=$5;printf("VAR ID(%s) type '=' initializer(%f) NEWLINE\n",$2,$5);}
-    | VAR ID type NEWLINE {printf("VAR ID type NEWLINE\n");}
+    : decl_check ASSIGN initializer newline { 
+                                                if ($1!=-1) {
+                                                    switch ($1) {
+                                                        case 0: /* int */
+                                                            temp.intData = $3;
+                                                            insert_value(temp);
+                                                            break;
+                                                        case 1: /* float */
+                                                            temp.floatData = $3;
+                                                            insert_value(temp);
+                                                            break;
+                                                        /* todo string
+                                                        case 2: /* string *\/
+                                                            temp.stringData = $3;
+                                                            insert_value(temp);
+                                                            break;
+                                                        *** todo string ***/
+                                                    }
+                                                    tail->noValue = 0;
+                                                    numIndex++;
+                                                }
+                                            }
+    | decl_check newline { 
+                            if ($1!=-1) { 
+                                tail->noValue = 1;
+                                numIndex++;
+                            }
+                         }   
+;
+
+decl_check
+    : VAR ID type { 
+                if (lookup_symbol($2)) {    /* redeclare */
+                    printf("[ERROR]redeclare variable at line %d\n", countLine);
+                    $$=-1;   /* error */
+                }
+                else {
+                    printf("insert symbol %s\n", $2);
+                    insert_symbol($2,$3);
+                    $$=$3;    /* without error, return enum of type */
+                }
+            }
+    | ID { if (!lookup_symbol($1)) printf("[ERROR]undeclare variable at line %d\n", countLine);dump_symbol();}
 ;
 
 
 initializer
-    : I_CONST 
-    | F_CONST {$$=$1;printf("%f\n",$1);}
-    | STRING
+    : I_CONST   {$$=$1;}
+    | F_CONST   {$$=$1;}
+    | STRING    /* {$$=$1;} */
 ;
 
 print_func 
@@ -78,6 +133,9 @@ type
     | FLOAT { $$ = $1; }
 ;
 
+newline
+    : NL { countLine++; }
+;
 %%
 
 /* C code section */
@@ -96,7 +154,77 @@ int main(int argc, char** argv)
     return 0;
 }
 
-void create_symbol() {}
-void insert_symbol() {}
-int lookup_symbol() {}
-void dump_symbol() {}
+/* Implete symbol table */
+enum dataType{ numInt, numFloat32, numString };
+
+/**** comment out to avoid conflict ****
+typedef union {
+        int intData;
+        float floatData;
+        char *stringData;
+} value;
+**** comment out to avoid conflict ****/
+
+struct dataBlock {
+    int index;
+    char id[16];
+    int type;
+    value data;
+    int noValue;    /* 1 = doesn't assign value */
+    struct dataBlock *next;
+};
+
+
+void create_symbol() {
+    head = NULL;
+    tail = head;
+}
+void insert_symbol(char *id, int type) {
+    current = (struct dataBlock*)malloc(sizeof(struct dataBlock));
+    if (!current)
+        perror("[insert_symbol]malloc failed\n");
+    
+    if (tail)
+        tail->next = current;
+    else
+        head = current;
+    tail = current;
+    current->index = numIndex;
+    strcpy(current->id,id);
+    current->type = type;
+}
+
+void insert_value(value dataUnion) {
+    if (!tail)
+        return;
+    
+    tail->data = dataUnion;
+}
+
+int lookup_symbol(char *id) {
+    for (current=head; current; current=current->next)
+        if (!strcmp(current->id,id))
+            return 1;   /* id is found */
+    return 0;   /* id not found */
+}
+
+void dump_symbol() {
+    printf("index\tID\ttype\tdata\n");
+
+    for (current=head; current; current=current->next) {
+        printf("%d\t%s\t",current->index, current->id);
+        switch (current->type) {
+            case numInt:
+                if (!current->noValue) printf("int\t%d\n", current->data.intData);
+                else printf("int\t\t\n");
+                break;
+            case numFloat32:
+                if (!current->noValue) printf("float32\t%f\n",current->data.floatData);
+                else printf("float32\t\t\n");
+                break;
+            case numString:
+                printf("string\t%s\n",current->data.stringData);
+                break;
+        }
+    }
+}
