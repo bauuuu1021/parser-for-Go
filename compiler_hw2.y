@@ -44,6 +44,7 @@
 %token LB RB LCB RCB
 %token C_PLUS COMMENT_START 
 %token PRINT PRINTLN QUOTE
+%token IF_START IF ELSEIF ELSE IF_END
 
 /* Token with return, which need to sepcify type */
 %token <i_val> I_CONST INT FLOAT COMMENT_END
@@ -52,7 +53,7 @@
 
 /* Nonterminal with return, which need to sepcify type */
 %type <f_val> stat declaration exp_stat initializer
-%type <i_val> type decl_check
+%type <i_val> type 
 
 
 /* Yacc will start at this nonterminal */
@@ -70,12 +71,13 @@ program stat
 stat
 :
 declaration
-| compound_stat /* { } */
+/*| compound_stat  { } */
 | assign_stat
-| relation_stat	newline
+| relation_stat	
 | print_func
 | newline
 | comment
+| if_stat
 ;
 
 declaration
@@ -212,6 +214,14 @@ C_PLUS newline { printf("C++ comment : \t%s\n",$1);}
 |
 ;
 
+if_stat		/* RE : IF (elseif)* [else] */
+:
+IF_START 	{printf("if\n");}
+| IF		{printf("if\n");}
+| ELSEIF	{printf("else if\n");}
+| ELSE 		{printf("else\n");}
+| IF_END	{;}
+;
 
 %%
 

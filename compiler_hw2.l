@@ -4,6 +4,7 @@
 extern YYSTYPE yylval; //YYSTYPE
 enum dataType{ numInt, numFloat32, numString };
 int commentLine;
+int countIf=0;
 %}
 
 /* Define regular expression label */
@@ -16,7 +17,7 @@ id			{letter}+({letter}|{digit})*
 
 %option yylineno
 
-%x COMMENT STRING_STATE
+%x COMMENT STRING_STATE IF_STATE
 
 /* Rules section */
 %%
@@ -62,8 +63,13 @@ id			{letter}+({letter}|{digit})*
 "println"	{ return PRINTLN; }
 
  /* Condition and Loop Keywords */
-"if"		{ }
-"else"		{ }
+"if"		                    { BEGIN IF_STATE; countIf++;return IF_START;}
+<IF_STATE>[ \t\n]*              {;}
+<IF_STATE>[^\"else\"\"else if\"\"if\"\"}\"]+ {;}
+<IF_STATE>"}"[ \t\n]*"else"     { return ELSE; }
+<IF_STATE>"}"[ \t\n]*"else if"  { return ELSEIF; }
+<IF_STATE>"if"                  { countIf++;return IF;}
+<IF_STATE>"}"                   { countIf--;if(!countIf) {BEGIN INITIAL;return IF_END;} }
 "for"		{ }
 
  /* Declaration Keywords */
@@ -99,7 +105,7 @@ id			{letter}+({letter}|{digit})*
 [\n]		{ return NL; }
 [ \t]		{ ; } /* Ignore */
 [^; \t] 	{ ; } /* Ignore other charactor sets */
-<<EOF>>     {  }
+<<EOF>>     { return 0; }
 
 %%
 
