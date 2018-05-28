@@ -42,11 +42,13 @@
 %token ADD SUB MUL DIV MOD INCRE DECRE
 %token LARGER SMALLER EQ_LARGER EQ_SMALLER EQUAL NOT_EQUAL
 %token LB RB LCB RCB
+%token C_PLUS COMMENT_START 
+%token PRINT PRINTLN QUOTE
 
 /* Token with return, which need to sepcify type */
-%token <i_val> I_CONST INT FLOAT
+%token <i_val> I_CONST INT FLOAT COMMENT_END
 %token <f_val> F_CONST
-%token <string> ID STRING
+%token <string> ID STRING C_PLUS C_COMMENT STRING
 
 /* Nonterminal with return, which need to sepcify type */
 %type <f_val> stat declaration exp_stat initializer
@@ -70,13 +72,15 @@ stat
 declaration
 | compound_stat /* { } */
 | assign_stat
+| relation_stat	newline
 | print_func
 | newline
+| comment
 ;
 
 declaration
 :
-VAR ID type ASSIGN initializer newline {
+VAR ID type ASSIGN exp_stat newline {
 	if (lookup_symbol($2))      /* redeclare */
 	{
 		printf("[ERROR]redeclare variable at line %d\n", countLine);
@@ -118,14 +122,6 @@ VAR ID type ASSIGN initializer newline {
 }
 ;
 
-
-initializer
-:
-I_CONST   {$$=$1;}
-| F_CONST   {$$=$1;}
-| STRING    /* {$$=$1;} */
-;
-
 exp_stat
 :
 LB exp_stat RB    {$$=$2;}
@@ -140,10 +136,27 @@ LB exp_stat RB    {$$=$2;}
 | exp_stat ADD exp_stat {$$=$1+$3;}
 | exp_stat SUB exp_stat {$$=$1-$3;}
 | ID { if (!lookup_symbol($1))
-		printf("[ERROR]undeclare variable at line %d\n", countLine+1); /* hasn't matched newline yet */
+		printf("[ERROR]undeclare variable at line %d\n", countLine+1); /* hasn't matched 'newline' yet */
 	else $$=current->data.intData;
 }
 | initializer
+;
+
+relation_stat
+: exp_stat LARGER exp_stat		{ printf("%s\n",($1>$3)?"true":"false"); }
+| exp_stat SMALLER exp_stat		{ printf("%s\n",($1<$3)?"true":"false"); }
+| exp_stat EQ_LARGER exp_stat	{ printf("%s\n",($1>=$3)?"true":"false"); }
+| exp_stat EQ_SMALLER exp_stat	{ printf("%s\n",($1<=$3)?"true":"false"); }
+| exp_stat EQUAL exp_stat		{ printf("%s\n",($1==$3)?"true":"false"); }
+| exp_stat NOT_EQUAL exp_stat	{ printf("%s\n",($1!=$3)?"true":"false"); }
+;
+
+initializer
+:
+I_CONST   {$$=$1;}
+| F_CONST   {$$=$1;}
+| STRING    /* {$$=$1;} */
+;
 
 assign_stat
 :
@@ -167,11 +180,16 @@ ID ASSIGN exp_stat newline {
 			*** todo string ***/
 		}
 	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);
 }
 ;
 
 print_func
-:
+: PRINT LB exp_stat RB newline		{printf("print : %f\t",$3);}
+| PRINT LB QUOTE STRING QUOTE RB newline		{printf("print : %s\t",$4);}
+| PRINTLN LB exp_stat RB newline	{printf("println : %f\t",$3);}
+| PRINTLN LB QUOTE STRING QUOTE RB newline		{printf("println : %s\n",$4);}
 ;
 
 type
@@ -184,6 +202,17 @@ newline
 :
 NL { countLine++; }
 ;
+
+comment
+:
+C_PLUS newline { printf("C++ comment : \t%s\n",$1);}
+|COMMENT_START  { printf("C type comment : \t/*");}
+|comment C_COMMENT { printf("%s",$2);}													
+|COMMENT_END newline { printf("*/\n"); countLine+=$1-1; }
+|
+;
+
+
 %%
 
 /* C code section */
