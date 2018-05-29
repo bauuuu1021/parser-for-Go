@@ -38,13 +38,15 @@
 %token IF ELSE FOR
 %token VAR NL
 %token INT VOID FLOAT
-%token ASSIGN
+%token ASSIGN ADD_ASSIGN SUB_ASSIGN MUL_ASSIGN DIV_ASSIGN MOD_ASSIGN
 %token ADD SUB MUL DIV MOD INCRE DECRE
 %token LARGER SMALLER EQ_LARGER EQ_SMALLER EQUAL NOT_EQUAL
+%token AND OR NOT
 %token LB RB LCB RCB
 %token C_PLUS COMMENT_START 
 %token PRINT PRINTLN QUOTE
 %token IF_START IF ELSEIF ELSE IF_END
+%token SEMICOLON
 
 /* Token with return, which need to sepcify type */
 %token <i_val> I_CONST INT FLOAT COMMENT_END
@@ -71,13 +73,15 @@ program stat
 stat
 :
 declaration
-/*| compound_stat  { } */
 | assign_stat
 | relation_stat	
 | print_func
 | newline
 | comment
 | if_stat
+| incre_decre
+| for_stat
+| logical_stat
 ;
 
 declaration
@@ -100,12 +104,6 @@ VAR ID type ASSIGN exp_stat newline {
 			temp.floatData = $5;
 			insert_value(temp);
 			break;
-			/* todo string
-			case 2: /* string *\/
-			    temp.stringData = $5;
-			    insert_value(temp);
-			    break;
-			*** todo string ***/
 		}
 		tail->noValue = 0;	/* contain value flag */
 		numIndex++;
@@ -134,12 +132,16 @@ LB exp_stat RB    {$$=$2;}
 	else
 		$$=$1/$3;
 }
-//| exp_stat MOD exp_stat { $$=$1%$3;}
+| exp_stat MOD exp_stat { 
+	if (($1==(int)$1) && ($3==(int)$3))		$$=(int)$1%(int)$3;
+	else 	printf("[ERROR] invalid operands (double) in MOD at Line %d\n", countLine+1); }
 | exp_stat ADD exp_stat {$$=$1+$3;}
 | exp_stat SUB exp_stat {$$=$1-$3;}
-| ID { if (!lookup_symbol($1))
+| ID { 
+	if (!lookup_symbol($1))
 		printf("[ERROR]undeclare variable at line %d\n", countLine+1); /* hasn't matched 'newline' yet */
-	else $$=current->data.intData;
+	else 
+		$$=(!current->type)? current->data.intData : current->data.floatData;
 }
 | initializer
 ;
@@ -174,12 +176,94 @@ ID ASSIGN exp_stat newline {
 			temp.floatData = $3;
 			insert_value(temp);
 			break;
-			/* todo string
-			case 2: /* string *\/
-			    temp.stringData = $3;
-			    insert_value(temp);
-			    break;
-			*** todo string ***/
+		}
+	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);
+}
+| ID ADD_ASSIGN exp_stat newline { 
+	if (lookup_symbol($1)) { 
+		current->noValue=0;	/* contain value flag */
+		switch (current->type)	{
+		case 0: /* int */
+			temp.intData += $3;
+			insert_value(temp);
+			break;
+		case 1: /* float */
+			temp.floatData += $3;
+			insert_value(temp);
+			break;
+		}
+	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);
+}
+| ID SUB_ASSIGN exp_stat newline { 
+	if (lookup_symbol($1)) { 
+		current->noValue=0;	/* contain value flag */
+		switch (current->type)	{
+		case 0: /* int */
+			temp.intData -= $3;
+			insert_value(temp);
+			break;
+		case 1: /* float */
+			temp.floatData -= $3;
+			insert_value(temp);
+			break;
+		}
+	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);
+}
+| ID MUL_ASSIGN exp_stat newline { 
+	if (lookup_symbol($1)) { 
+		current->noValue=0;	/* contain value flag */
+		switch (current->type)	{
+		case 0: /* int */
+			temp.intData *= $3;
+			insert_value(temp);
+			break;
+		case 1: /* float */
+			temp.floatData *= $3;
+			insert_value(temp);
+			break;
+		}
+	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);
+}
+| ID DIV_ASSIGN exp_stat newline { 
+	if (lookup_symbol($1)) { 
+		current->noValue=0;	/* contain value flag */
+		switch (current->type)	{
+		case 0: /* int */
+			temp.intData /= $3;
+			insert_value(temp);
+			break;
+		case 1: /* float */
+			temp.floatData /= $3;
+			insert_value(temp);
+			break;
+		}
+	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);
+}
+| ID MOD_ASSIGN exp_stat newline { 
+	if (lookup_symbol($1)) { 
+		current->noValue=0;	/* contain value flag */
+		switch (current->type)	{
+		case 0: /* int */
+			if ($3==(int)$3) {	/* $3 is int */
+				temp.intData %= (int)$3;
+				insert_value(temp);
+			}
+			else
+				printf("[ERROR] invalid operands (double) in MOD at Line %d\n", countLine+1);
+			break;
+		case 1: /* float */
+			printf("[ERROR] invalid operands (double) in MOD at Line %d\n", countLine+1);
+			break;
 		}
 	}
 	else	
@@ -188,9 +272,11 @@ ID ASSIGN exp_stat newline {
 ;
 
 print_func
-: PRINT LB exp_stat RB newline		{printf("print : %f\t",$3);}
+: PRINT LB exp_stat RB newline					{if ($3==(int)$3) printf("print : %d\t",(int)$3); 
+												 else	printf("print : %f\t",$3);}
 | PRINT LB QUOTE STRING QUOTE RB newline		{printf("print : %s\t",$4);}
-| PRINTLN LB exp_stat RB newline	{printf("println : %f\t",$3);}
+| PRINTLN LB exp_stat RB newline				{if ($3==(int)$3) printf("println : %d\n",(int)$3); 
+												 else	printf("println : %f\n",$3);}
 | PRINTLN LB QUOTE STRING QUOTE RB newline		{printf("println : %s\n",$4);}
 ;
 
@@ -203,6 +289,7 @@ INT { $$ = $1;}
 newline
 :
 NL { countLine++; }
+|
 ;
 
 comment
@@ -223,6 +310,50 @@ IF_START 	{printf("if\n");}
 | IF_END	{;}
 ;
 
+incre_decre
+:
+ID INCRE		{
+	if (lookup_symbol($1)) { 
+		switch (current->type)	{
+		case 0: /* int */
+			temp.intData++;
+			insert_value(temp);
+			break;
+		case 1: /* float */
+			temp.floatData++;
+			insert_value(temp);
+			break;
+		}
+	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);}
+| ID DECRE		{
+	if (lookup_symbol($1)) { 
+		switch (current->type)	{
+		case 0: /* int */
+			temp.intData--;
+			insert_value(temp);
+			break;
+		case 1: /* float */
+			temp.floatData--;
+			insert_value(temp);
+			break;
+		}
+	}
+	else	
+		printf("[ERROR]undeclare variable at line %d\n", countLine);}
+;
+
+for_stat
+: FOR LB stat SEMICOLON relation_stat SEMICOLON stat RB LCB program RCB	{ printf("for\n"); }
+;
+
+logical_stat
+: 
+relation_stat AND relation_stat 	{ printf("logical and\n"); }
+| relation_stat OR relation_stat	{ printf("logical or\n"); }
+| NOT relation_stat					{ printf("logical not\n"); }
+;
 %%
 
 /* C code section */
@@ -235,8 +366,10 @@ int yyerror(char *s)
 int main(int argc, char** argv)
 {
 	yylineno = 0;
-
+	create_symbol();
 	yyparse();
+	printf("\ntotal line : %d\n", countLine);
+	dump_symbol();
 
 	return 0;
 }
@@ -264,6 +397,7 @@ struct dataBlock {
 
 void create_symbol()
 {
+	printf("Create symbol table\n");
 	head = NULL;
 	tail = head;
 }

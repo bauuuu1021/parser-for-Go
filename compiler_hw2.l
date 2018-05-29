@@ -41,16 +41,16 @@ id			{letter}+({letter}|{digit})*
 
  /* Assignment */
 "="		{ return ASSIGN; }
-"+="	{ }
-"-="	{ }
-"*="	{ }
-"/="	{ }
-"%="	{ }
+"+="	{ return ADD_ASSIGN; }
+"-="	{ return SUB_ASSIGN; }
+"*="	{ return MUL_ASSIGN; }
+"/="	{ return DIV_ASSIGN; }
+"%="	{ return MOD_ASSIGN; }
 
  /* Logical */
-"&&"	{ }
-"||"	{ }
-"!"		{ }
+"&&"	{ return AND; }
+"||"	{ return OR; }
+"!"		{ return NOT; }
 
  /* Delimiters */
 "("		{ return LB; }
@@ -70,7 +70,7 @@ id			{letter}+({letter}|{digit})*
 <IF_STATE>"}"[ \t\n]*"else if"  { return ELSEIF; }
 <IF_STATE>"if"                  { countIf++;return IF;}
 <IF_STATE>"}"                   { countIf--;if(!countIf) {BEGIN INITIAL;return IF_END;} }
-"for"		{ }
+"for"		                    { return FOR; }
 
  /* Declaration Keywords */
 "var"		{ return VAR; }
@@ -105,6 +105,7 @@ id			{letter}+({letter}|{digit})*
 [\n]		{ return NL; }
 [ \t]		{ ; } /* Ignore */
 [^; \t] 	{ ; } /* Ignore other charactor sets */
+;           { return SEMICOLON; }
 <<EOF>>     { return 0; }
 
 %%
