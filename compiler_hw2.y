@@ -45,11 +45,11 @@
 %token LB RB LCB RCB
 %token C_PLUS COMMENT_START 
 %token PRINT PRINTLN QUOTE
-%token IF_START IF ELSEIF ELSE IF_END
+%token IF_START IF ELSEIF ELSE 
 %token SEMICOLON
 
 /* Token with return, which need to sepcify type */
-%token <i_val> I_CONST INT FLOAT COMMENT_END
+%token <i_val> I_CONST INT FLOAT COMMENT_END IF_END
 %token <f_val> F_CONST
 %token <string> ID STRING C_PLUS C_COMMENT STRING
 
@@ -144,6 +144,7 @@ LB exp_stat RB    {$$=$2;}
 		$$=(!current->type)? current->data.intData : current->data.floatData;
 }
 | initializer
+|
 ;
 
 relation_stat
@@ -153,6 +154,7 @@ relation_stat
 | exp_stat EQ_SMALLER exp_stat	{ printf("%s\n",($1<=$3)?"true":"false"); }
 | exp_stat EQUAL exp_stat		{ printf("%s\n",($1==$3)?"true":"false"); }
 | exp_stat NOT_EQUAL exp_stat	{ printf("%s\n",($1!=$3)?"true":"false"); }
+|
 ;
 
 initializer
@@ -307,7 +309,7 @@ IF_START 	{printf("if\n");}
 | IF		{printf("if\n");}
 | ELSEIF	{printf("else if\n");}
 | ELSE 		{printf("else\n");}
-| IF_END	{;}
+| IF_END	{ countLine+=$1;}
 ;
 
 incre_decre
@@ -354,6 +356,7 @@ relation_stat AND relation_stat 	{ printf("logical and\n"); }
 | relation_stat OR relation_stat	{ printf("logical or\n"); }
 | NOT relation_stat					{ printf("logical not\n"); }
 ;
+
 %%
 
 /* C code section */
@@ -368,7 +371,7 @@ int main(int argc, char** argv)
 	yylineno = 0;
 	create_symbol();
 	yyparse();
-	printf("\ntotal line : %d\n", countLine);
+	printf("\ntotal line : %d\n", ++countLine);
 	dump_symbol();
 
 	return 0;
@@ -376,14 +379,6 @@ int main(int argc, char** argv)
 
 /* Implete symbol table */
 enum dataType { numInt, numFloat32, numString };
-
-/**** comment out to avoid conflict ****
-typedef union {
-        int intData;
-        float floatData;
-        char *stringData;
-} value;
-**** comment out to avoid conflict ****/
 
 struct dataBlock {
 	int index;
@@ -394,13 +389,13 @@ struct dataBlock {
 	struct dataBlock *next;
 };
 
-
 void create_symbol()
 {
 	printf("Create symbol table\n");
 	head = NULL;
 	tail = head;
 }
+
 void insert_symbol(char *id, int type)
 {
 	current = (struct dataBlock*)malloc(sizeof(struct dataBlock));
@@ -423,7 +418,6 @@ void insert_value(value dataUnion)
 		return;
 
 	current->data = dataUnion;
-	dump_symbol();
 }
 
 int lookup_symbol(char *id)

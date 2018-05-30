@@ -5,6 +5,7 @@ extern YYSTYPE yylval; //YYSTYPE
 enum dataType{ numInt, numFloat32, numString };
 int commentLine;
 int countIf=0;
+int ifLine;
 %}
 
 /* Define regular expression label */
@@ -63,13 +64,16 @@ id			{letter}+({letter}|{digit})*
 "println"	{ return PRINTLN; }
 
  /* Condition and Loop Keywords */
-"if"		                    { BEGIN IF_STATE; countIf++;return IF_START;}
-<IF_STATE>[ \t\n]*              {;}
-<IF_STATE>[^\"else\"\"else if\"\"if\"\"}\"]+ {;}
-<IF_STATE>"}"[ \t\n]*"else"     { return ELSE; }
-<IF_STATE>"}"[ \t\n]*"else if"  { return ELSEIF; }
+"if"		                    { BEGIN IF_STATE; countIf++;ifLine=0;return IF_START;}
+<IF_STATE>[ \t]*                {;}
+<IF_STATE>\n                    { ifLine++;}
+<IF_STATE>[^"else""else if""if""}"\n]+ {;}
+<IF_STATE>"}"[ \t]*"else"       { return ELSE; }
+<IF_STATE>"}"[ \t]*"else if"    { return ELSEIF; }
+<IF_STATE>"}"[ \t\n]*"else"       { ifLine++;return ELSE; }
+<IF_STATE>"}"[ \t\n]*"else if"    { ifLine++;return ELSEIF; }
 <IF_STATE>"if"                  { countIf++;return IF;}
-<IF_STATE>"}"                   { countIf--;if(!countIf) {BEGIN INITIAL;return IF_END;} }
+<IF_STATE>"}"                   { countIf--;if(!countIf) {BEGIN INITIAL;yylval.i_val=ifLine;return IF_END;} }
 "for"		                    { return FOR; }
 
  /* Declaration Keywords */
