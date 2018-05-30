@@ -24,13 +24,13 @@ id			{letter}+({letter}|{digit})*
 %%
 
  /* Arithmetic */
-"+"     { printf("ADD\n");return ADD; }
-"-" 	{ printf("SUB\n");return SUB; }
-"*" 	{ printf("MUL\n");return MUL; }
-"/" 	{ printf("DIV\n");return DIV; }
-"%"     { printf("MOD\n");return MOD; }
-"++"    { printf("INCRE\n");return INCRE; }
-"--"    { printf("DECRE\n");return DECRE; }
+"+"     { return ADD; }
+"-" 	{ return SUB; }
+"*" 	{ return MUL; }
+"/" 	{ return DIV; }
+"%"     { return MOD; }
+"++"    { return INCRE; }
+"--"    { return DECRE; }
 
  /* Relational */
 ">"		{ return LARGER; }

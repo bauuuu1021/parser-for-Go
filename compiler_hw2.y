@@ -20,9 +20,9 @@
 	} value;
 
 	struct dataBlock *head, *current, *tail;
-	value temp; /* union contain value to insert into symbol table */
-	int numIndex = 1; /* aka current index number */
-	int countLine = 0;
+	value temp; 		/* union contain value to insert into symbol table */
+	int numIndex = 1; 	/* aka current index number */
+	int countLine = 1;	/* input file should not be empty */
 	
 %}
 
@@ -124,19 +124,21 @@ VAR ID type ASSIGN exp_stat newline {
 
 exp_stat
 :
-LB exp_stat RB    {$$=$2;}
-| exp_stat MUL exp_stat {$$=$1*$3;}
+LB exp_stat RB    {printf("BRACKET\n");$$=$2;}
+| exp_stat MUL exp_stat {printf("MUL\n");$$=$1*$3;}
 | exp_stat DIV exp_stat {
+	printf("DIV\n");
 	if (!$3)
 		printf("[ERROR]the divisor is 0 at line %d\n", countLine+1); /* hasn't matched newline yet */
 	else
 		$$=$1/$3;
 }
 | exp_stat MOD exp_stat { 
+	printf("MOD\n");
 	if (($1==(int)$1) && ($3==(int)$3))		$$=(int)$1%(int)$3;
 	else 	printf("[ERROR] invalid operands (double) in MOD at Line %d\n", countLine+1); }
-| exp_stat ADD exp_stat {$$=$1+$3;}
-| exp_stat SUB exp_stat {$$=$1-$3;}
+| exp_stat ADD exp_stat {printf("ADD\n");$$=$1+$3;}
+| exp_stat SUB exp_stat {printf("SUB\n");$$=$1-$3;}
 | ID { 
 	if (!lookup_symbol($1))
 		printf("[ERROR]undeclare variable at line %d\n", countLine+1); /* hasn't matched 'newline' yet */
@@ -167,6 +169,7 @@ I_CONST   {$$=$1;}
 assign_stat
 :
 ID ASSIGN exp_stat newline { 
+	printf("ASSIGN\n");
 	if (lookup_symbol($1)) { 
 		current->noValue=0;	/* contain value flag */
 		switch (current->type)	{
@@ -184,6 +187,7 @@ ID ASSIGN exp_stat newline {
 		printf("[ERROR]undeclare variable at line %d\n", countLine);
 }
 | ID ADD_ASSIGN exp_stat newline { 
+	printf("ADD_ASSIGN\n");
 	if (lookup_symbol($1)) { 
 		current->noValue=0;	/* contain value flag */
 		switch (current->type)	{
@@ -201,6 +205,7 @@ ID ASSIGN exp_stat newline {
 		printf("[ERROR]undeclare variable at line %d\n", countLine);
 }
 | ID SUB_ASSIGN exp_stat newline { 
+	printf("SUB_ASSIGN\n");
 	if (lookup_symbol($1)) { 
 		current->noValue=0;	/* contain value flag */
 		switch (current->type)	{
@@ -218,6 +223,7 @@ ID ASSIGN exp_stat newline {
 		printf("[ERROR]undeclare variable at line %d\n", countLine);
 }
 | ID MUL_ASSIGN exp_stat newline { 
+	printf("MUL_ASSIGN\n");
 	if (lookup_symbol($1)) { 
 		current->noValue=0;	/* contain value flag */
 		switch (current->type)	{
@@ -235,6 +241,7 @@ ID ASSIGN exp_stat newline {
 		printf("[ERROR]undeclare variable at line %d\n", countLine);
 }
 | ID DIV_ASSIGN exp_stat newline { 
+	printf("DIV_ASSIGN\n");
 	if (lookup_symbol($1)) { 
 		current->noValue=0;	/* contain value flag */
 		switch (current->type)	{
@@ -252,6 +259,7 @@ ID ASSIGN exp_stat newline {
 		printf("[ERROR]undeclare variable at line %d\n", countLine);
 }
 | ID MOD_ASSIGN exp_stat newline { 
+	printf("MOD_ASSIGN\n");
 	if (lookup_symbol($1)) { 
 		current->noValue=0;	/* contain value flag */
 		switch (current->type)	{
@@ -297,7 +305,7 @@ NL { countLine++; }
 comment
 :
 C_PLUS newline { printf("C++ comment : \t%s\n",$1);}
-|COMMENT_START  { printf("C type comment : \t/*");}
+|COMMENT_START  { printf("C type comment : \n/*");}
 |comment C_COMMENT { printf("%s",$2);}													
 |COMMENT_END newline { printf("*/\n"); countLine+=$1-1; }
 |
@@ -315,6 +323,7 @@ IF_START 	{printf("if\n");}
 incre_decre
 :
 ID INCRE		{
+	printf("INCRE\n");
 	if (lookup_symbol($1)) { 
 		switch (current->type)	{
 		case 0: /* int */
@@ -330,6 +339,7 @@ ID INCRE		{
 	else	
 		printf("[ERROR]undeclare variable at line %d\n", countLine);}
 | ID DECRE		{
+	printf("DECRE\n");
 	if (lookup_symbol($1)) { 
 		switch (current->type)	{
 		case 0: /* int */
@@ -371,7 +381,7 @@ int main(int argc, char** argv)
 	yylineno = 0;
 	create_symbol();
 	yyparse();
-	printf("\ntotal line : %d\n", ++countLine);
+	printf("\ntotal line : %d\n", countLine);
 	dump_symbol();
 
 	return 0;

@@ -25,7 +25,7 @@ the above symbol table functions.
     2. The TAs check the value of each table entry to see if the parser is implemented correctly.
 - [x] Support the variants of the assignment operators.
 (i.e., =, +=, -=, *=, /=, %= ) 
-- [ ] Handle arithmetic operations, where brackets and precedence should be considered.
+- [x] Handle arithmetic operations, where brackets and precedence should be considered.
 * Note: The modulo operation (%) does not involve any floating point variables. Hence,
 your parser should perform the type checking.
 - [x] Design the grammar for accepting the print and println invocations and display the
