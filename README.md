@@ -5,6 +5,7 @@
     ```
     sudo apt-get install byacc
     ```
+   **NOTICE:NOT runable if install bison**
 * make
     ```
     make
