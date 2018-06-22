@@ -19,6 +19,16 @@
 		char *stringData;
 	} value;
 
+
+	struct dataBlock {
+		int index;
+		char id[16];
+		int type;
+		value data;
+		int noValue;    /* 1 = doesn't assign value */
+		struct dataBlock *next;
+	};
+
 	struct dataBlock *head, *current, *tail;
 	value temp; 		/* union contain value to insert into symbol table */
 	int numIndex = 1; 	/* aka current index number */
@@ -51,7 +61,7 @@
 /* Token with return, which need to sepcify type */
 %token <i_val> I_CONST INT FLOAT COMMENT_END IF_END
 %token <f_val> F_CONST
-%token <string> ID STRING C_PLUS C_COMMENT STRING
+%token <string> ID STRING C_PLUS C_COMMENT
 
 /* Nonterminal with return, which need to sepcify type */
 %type <f_val> stat declaration exp_stat initializer
@@ -389,15 +399,6 @@ int main(int argc, char** argv)
 
 /* Implete symbol table */
 enum dataType { numInt, numFloat32, numString };
-
-struct dataBlock {
-	int index;
-	char id[16];
-	int type;
-	value data;
-	int noValue;    /* 1 = doesn't assign value */
-	struct dataBlock *next;
-};
 
 void create_symbol()
 {
